@@ -158,19 +158,21 @@ def main_worker(gpu, ngpus_per_node, args):
             print("=> loading checkpoint '{}'".format(args.pretrained))
             checkpoint = torch.load(args.pretrained, map_location="cpu")
 
-            # rename moco pre-trained keys
-            state_dict = checkpoint['state_dict']
-            for k in list(state_dict.keys()):
-                # retain only encoder_q up to before the embedding layer
-                if k.startswith('module.encoder_q') and not k.startswith('module.encoder_q.fc'):
-                    # remove prefix
-                    state_dict[k[len("module.encoder_q."):]] = state_dict[k]
-                # delete renamed or unused k
-                del state_dict[k]
-
-            args.start_epoch = 0
-            msg = model.load_state_dict(state_dict, strict=False)
-            assert set(msg.missing_keys) == {"fc.weight", "fc.bias"}
+            # # rename moco pre-trained keys
+            # state_dict = checkpoint['state_dict']
+            # for k in list(state_dict.keys()):
+            #     # retain only encoder_q up to before the embedding layer
+            #     if k.startswith('module.encoder_q') and not k.startswith('module.encoder_q.fc'):
+            #         # remove prefix
+            #         state_dict[k[len("module.encoder_q."):]] = state_dict[k]
+            #     # delete renamed or unused k
+            #     del state_dict[k]
+            #
+            # args.start_epoch = 0
+            # msg = model.load_state_dict(state_dict, strict=False)
+            msg = model.load_state_dict(checkpoint, strict=False)
+            print(msg)
+            # assert set(msg.missing_keys) == {"fc.weight", "fc.bias"}
 
             print("=> loaded pre-trained model '{}'".format(args.pretrained))
         else:
@@ -301,8 +303,8 @@ def main_worker(gpu, ngpus_per_node, args):
                 'best_acc1': best_acc1,
                 'optimizer' : optimizer.state_dict(),
             }, is_best)
-            if epoch == args.start_epoch:
-                sanity_check(model.state_dict(), args.pretrained)
+            # if epoch == args.start_epoch:
+            #     sanity_check(model.state_dict(), args.pretrained)
 
 
 def train(train_loader, model, criterion, optimizer, epoch, args):
